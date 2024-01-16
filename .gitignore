@@ -1,0 +1,7 @@
+.idea/
+
+conf.d/*
+!conf.d/.gitkeep
+
+logs/*
+!logs/.gitkeep
