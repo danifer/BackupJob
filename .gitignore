@@ -2,6 +2,7 @@
 
 conf.d/*
 !conf.d/.gitkeep
+!conf.d/backup_job_example.php
 
 logs/*
 !logs/.gitkeep
