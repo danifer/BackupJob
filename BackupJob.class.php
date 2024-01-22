@@ -36,19 +36,19 @@ class BackupJob {
         $this->rsyncLogFile = sprintf(
             '%s/%s-%s.rsync.log',
             self::$logDirectory,
-            date('Y-m-d.H'),
+            date('Y-m-d.His'),
             $logName
         );
         $this->rsyncDryRunLogFile = sprintf(
             '%s/%s-%s.rsync.dry_run.log',
             self::$logDirectory,
-            date('Y-m-d.H'),
+            date('Y-m-d.His'),
             $logName
         );
         $this->jsonResponsePath = sprintf(
             '%s/%s-%s.json',
             self::$logDirectory,
-            date('Y-m-d.H'),
+            date('Y-m-d.His'),
             $logName
         );
     }

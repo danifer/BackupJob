@@ -94,9 +94,9 @@ foreach($backupJobs as $key => $backupJob) {
 }
 
 $jsonSummaryPath = sprintf(
-    '%s/%s_summary.json',
+    '%s/%s-%s.summary.json',
     BackupJob::$logDirectory,
-    date('Y-m-d.H')
+    date('Y-m-d.His')
 );
 
 file_put_contents(
