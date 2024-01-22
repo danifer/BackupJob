@@ -100,8 +100,10 @@ $jsonSummaryPath = sprintf(
     date('Y-m-d.H')
 );
 
-file_put_contents(sprintf(
+file_put_contents(
     $jsonSummaryPath,
-), json_encode($arr, JSON_PRETTY_PRINT));
+    json_encode($arr, JSON_PRETTY_PRINT)."\n",
+    FILE_APPEND
+);
 
 exit('Finished: '.date('c'));
