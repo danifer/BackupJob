@@ -81,6 +81,10 @@ foreach($backupJobs as $key => $backupJob) {
     }
 
     $arr[$key] = $output;
+    unset(
+        $arr[$key]['sends'],
+        $arr[$key]['receives']
+    );
 
     print_r($arr[$key]);
 
@@ -99,3 +103,5 @@ $jsonSummaryPath = sprintf(
 file_put_contents(sprintf(
     $jsonSummaryPath,
 ), json_encode($arr, JSON_PRETTY_PRINT));
+
+exit('Finished: '.date('c'));
