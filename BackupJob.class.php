@@ -13,7 +13,7 @@ class BackupJob {
     private $force = false;
     private $dryRun = false;
     private $destination;
-    private $deleteThreshold = 25;
+    private $deleteThreshold = 100;
 
     public function __construct(
         string $jobName,
