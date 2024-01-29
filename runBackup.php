@@ -41,6 +41,10 @@ if (
     ));
 }
 
+if ($dryRun) {
+    echo ("[NOTICE] --dryRun option set [%s]\n");
+}
+
 if ($exitCode) {
     exit($exitCode);
 }
@@ -66,12 +70,13 @@ echo(sprintf(
 $arr = [ ];
 shuffle($backupJobs);
 foreach($backupJobs as $key => $backupJob) {
-    $backupJob->setDryRun($dryRun);
+    $backupJob
+        ->setDryRun($dryRun)
+        ->setLogDirectory($logDir);
 
     if ($jobName && $backupJob->getJobName() !== $jobName) {
         continue;
     }
-
     if ($printCommand) {
         $output = [$backupJob->buildCommand($dryRun)];
     } else {
@@ -96,7 +101,7 @@ foreach($backupJobs as $key => $backupJob) {
 
 $jsonSummaryPath = sprintf(
     '%s/%s.summary.json',
-    BackupJob::$logDirectory,
+    $logDir,
     date('Y-m-d.His')
 );
 

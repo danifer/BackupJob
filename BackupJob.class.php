@@ -1,8 +1,6 @@
 <?php
 class BackupJob {
     protected $startDate;
-    protected $rsyncLogFile;
-    protected $rsyncDryRunLogFile;
     protected $jobName;
     private $startTime;
     private $source;
@@ -13,6 +11,7 @@ class BackupJob {
     private $dryRun = false;
     private $destination;
     private $deleteThreshold = 100;
+    private $logDirectory;
 
     public function __construct(
         string $jobName,
@@ -30,27 +29,6 @@ class BackupJob {
         $this->deleteThreshold = $deleteThreshold ?? $this->deleteThreshold;
         $this->startDate = date('c');
         $this->startTime = time();
-        $this->logDirectory = (!empty($options['logDir'])) ? $options['logDir'] : './logs';
-
-        $logName = preg_replace( '/\W/', '_', $jobName);
-        $this->rsyncLogFile = sprintf(
-            '%s/%s-%s.rsync.log',
-            $this->logDirectory,
-            date('Y-m-d.His'),
-            $logName
-        );
-        $this->rsyncDryRunLogFile = sprintf(
-            '%s/%s-%s.rsync.dry_run.log',
-            $this->logDirectory,
-            date('Y-m-d.His'),
-            $logName
-        );
-        $this->jsonResponsePath = sprintf(
-            '%s/%s-%s.json',
-            $this->logDirectory,
-            date('Y-m-d.His'),
-            $logName
-        );
     }
     public function setDeleteThreshold(int $int) : self
     {
@@ -86,9 +64,35 @@ class BackupJob {
     {
         return $this->jobName;
     }
-    public function getLogDirectory() : string
+    public function getLogDirectory() :? string
     {
         return $this->logDirectory;
+    }
+    public function setLogDirectory(string $logDir) : self
+    {
+        $this->logDirectory = $logDir;
+
+        $logName = preg_replace( '/\W/', '_', $this->jobName);
+        $this->rsyncLogFile = sprintf(
+            '%s/%s-%s.rsync.log',
+            $this->getLogDirectory(),
+            date('c'),
+            $logName
+        );
+        $this->rsyncDryRunLogFile = sprintf(
+            '%s/%s-%s.rsync.dry_run.log',
+            $this->getLogDirectory(),
+            date('c'),
+            $logName
+        );
+        $this->jsonResponsePath = sprintf(
+            '%s/%s-%s.json',
+            $this->getLogDirectory(),
+            date('c'),
+            $logName
+        );
+
+        return $this;
     }
     public function execute() : array
     {
@@ -191,10 +195,10 @@ class BackupJob {
     private function createLogFiles() : void
     {
         if (
-            !is_dir($this->logDirectory) &&
-            !mkdir($this->logDirectory, 0777, true)
+            !is_dir($this->getLogDirectory()) &&
+            !mkdir($this->getLogDirectory(), 0777, true)
         ) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->logDirectory));
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->getLogDirectory()));
         }
 
         $logFiles = [
