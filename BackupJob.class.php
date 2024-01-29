@@ -1,6 +1,5 @@
 <?php
 class BackupJob {
-    public static $logDirectory = './logs';
     protected $startDate;
     protected $rsyncLogFile;
     protected $rsyncDryRunLogFile;
@@ -31,23 +30,24 @@ class BackupJob {
         $this->deleteThreshold = $deleteThreshold ?? $this->deleteThreshold;
         $this->startDate = date('c');
         $this->startTime = time();
+        $this->logDirectory = (!empty($options['logDir'])) ? $options['logDir'] : './logs';
 
         $logName = preg_replace( '/\W/', '_', $jobName);
         $this->rsyncLogFile = sprintf(
             '%s/%s-%s.rsync.log',
-            self::$logDirectory,
+            $this->logDirectory,
             date('Y-m-d.His'),
             $logName
         );
         $this->rsyncDryRunLogFile = sprintf(
             '%s/%s-%s.rsync.dry_run.log',
-            self::$logDirectory,
+            $this->logDirectory,
             date('Y-m-d.His'),
             $logName
         );
         $this->jsonResponsePath = sprintf(
             '%s/%s-%s.json',
-            self::$logDirectory,
+            $this->logDirectory,
             date('Y-m-d.His'),
             $logName
         );
@@ -85,6 +85,10 @@ class BackupJob {
     public function getJobName() : string
     {
         return $this->jobName;
+    }
+    public function getLogDirectory() : string
+    {
+        return $this->logDirectory;
     }
     public function execute() : array
     {
@@ -187,10 +191,10 @@ class BackupJob {
     private function createLogFiles() : void
     {
         if (
-            !is_dir(self::$logDirectory) &&
-            !mkdir(self::$logDirectory, 0777, true)
+            !is_dir($this->logDirectory) &&
+            !mkdir($this->logDirectory, 0777, true)
         ) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', self::$logDirectory));
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $this->logDirectory));
         }
 
         $logFiles = [

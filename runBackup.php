@@ -7,13 +7,14 @@ $options = getopt(null, [
     'printCommand::',
     'jobName::',
     'configDir:',
+    'logDir:',
 ]);
-$force = isset($options['force']);
-$dryRun = isset($options['dryRun']);
-$printCommand = isset($options['printCommand']);
-$jobName = $options['jobName'] ?? null;
-$logDir = BackupJob::$logDirectory;
 $configDir = $options['configDir'] ?? null;
+$jobName = $options['jobName'] ?? null;
+$logDir = $options['logDir'] ?? null;
+$dryRun = isset($options['dryRun']);
+$force = isset($options['force']);
+$printCommand = isset($options['printCommand']);
 
 $exitCode = 0;
 if (
@@ -29,9 +30,9 @@ if (
 }
 
 if (
-    !is_writable($logDir)
+    empty($logDir) || !is_dir($logDir) || !is_writable($logDir)
 ) {
-    echo("[ERROR] Log directory is not writable.\n");
+    echo("[ERROR] Log directory invalid. Usage: --logDir=\"./logs\".\n");
     $exitCode = 1;
 } else {
     echo(sprintf(
