@@ -1,8 +1,5 @@
 <?php
 class BackupJob {
-    protected $startDate;
-    protected $jobName;
-    private $startTime;
     private $source;
     private $rsyncBin;
     private $options;
@@ -12,7 +9,7 @@ class BackupJob {
     private $destination;
     private $deleteThreshold = 100;
     private $logDirectory;
-
+    protected $jobName;
     public function __construct(
         string $jobName,
         string $rsyncBin,
@@ -27,8 +24,6 @@ class BackupJob {
         $this->destination = $destination;
         $this->options = $options;
         $this->deleteThreshold = $deleteThreshold ?? $this->deleteThreshold;
-        $this->startDate = date('c');
-        $this->startTime = time();
     }
     public function setDeleteThreshold(int $int) : self
     {
@@ -96,6 +91,9 @@ class BackupJob {
     }
     public function execute() : array
     {
+        $startDate = date('c');
+        $startTime = time();
+
         $this->createLogFiles();
 
         $deletes =
@@ -157,11 +155,11 @@ class BackupJob {
         $result = [
             'jobName' => $this->getJobName(),
             'command' => $command,
-            'startDate' => $this->startDate,
+            'startDate' => $startDate,
             'endDate' => $endDate,
-            'startTime' => $this->startTime,
+            'startTime' => $startTime,
             'endTime' => $endTime,
-            'duration' => ($endTime - $this->startTime),
+            'duration' => ($endTime - $startTime),
             'hasError' => !empty($errors),
             'countErrors' => count($errors),
             'errors' => $errors,
