@@ -1,7 +1,7 @@
 <?php
 require_once('BackupJob.class.php');
 
-$options = getopt(null, [
+$options = getopt('', [
     'force::',
     'dryRun::',
     'printCommand::',

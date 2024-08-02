@@ -1,5 +1,6 @@
 <?php
 class BackupJob {
+    protected $jobName;
     private $source;
     private $rsyncBin;
     private $options;
@@ -9,7 +10,9 @@ class BackupJob {
     private $destination;
     private $deleteThreshold = 100;
     private $logDirectory;
-    protected $jobName;
+    private $rsyncLogFile;
+    private $rsyncDryRunLogFile;
+
     public function __construct(
         string $jobName,
         string $rsyncBin,
