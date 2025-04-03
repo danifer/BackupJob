@@ -34,6 +34,10 @@ class BackupJob {
 
         return $this;
     }
+    public function getDeleteThreshold() : int
+    {
+        return $this->deleteThreshold;
+    }
     public function setDryRun(bool $bool) : self
     {
         $this->dryRun = $bool;

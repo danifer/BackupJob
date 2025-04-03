@@ -27,11 +27,11 @@ if (isset($options['h']) || isset($options['help'])) {
 if (
     empty($configDir) || !is_dir($configDir)
 ) {
-    echo("[ERROR] Configuration directory invalid. Usage: --configDir=\"./conf.d\".\n");
+    echo("[ERROR] Configuration directory invalid. Usage: --configDir=\"./conf.d\"." . PHP_EOL);
     $exitCode = 1;
 } else {
     echo(sprintf(
-        "[NOTICE] Config directory set to [%s]\n",
+        "[NOTICE] Config directory set to [%s]" . PHP_EOL,
         realpath($configDir)
     ));
 }
@@ -39,22 +39,22 @@ if (
 if (
     empty($logDir) || !is_dir($logDir) || !is_writable($logDir)
 ) {
-    echo("[ERROR] Log directory invalid. Usage: --logDir=\"./logs\".\n");
+    echo("[ERROR] Log directory invalid. Usage: --logDir=\"./logs\"." . PHP_EOL);
     $exitCode = 1;
 } else {
     echo(sprintf(
-        "[NOTICE] Log directory set to [%s]\n",
+        "[NOTICE] Log directory set to [%s]" . PHP_EOL,
         realpath($logDir)
     ));
 }
 
 if ($dryRun) {
-    echo ("[NOTICE] --dryRun option set [%s]\n");
+    echo ("[NOTICE] --dryRun option set [%s]" . PHP_EOL);
 }
 
 if (!empty($jobName)) {
     echo(sprintf(
-        "[NOTICE] Processing jobName [%s]\n",
+        "[NOTICE] Processing jobName [%s]" . PHP_EOL,
         $jobName
     ));
 }
@@ -77,7 +77,7 @@ foreach (glob(sprintf("%s/*.php", $configDir)) as $filename)
 }
 
 echo(sprintf(
-    "[NOTICE] %s jobs available.\n",
+    "[NOTICE] %s jobs available." . PHP_EOL,
     count($backupJobs)
 ));
 
@@ -90,6 +90,18 @@ foreach($backupJobs as $key => $backupJob) {
     if ($jobName && $backupJob->getJobName() !== $jobName) {
         continue;
     }
+
+    echo sprintf(
+        '[NOTICE] Starting job: %s' . PHP_EOL,
+        $backupJob->getJobName(),
+        $backupJob->getDeleteThreshold()
+    );
+
+    echo sprintf(
+        '[NOTICE] Delete threshold set to %s' . PHP_EOL,
+        $backupJob->getDeleteThreshold()
+    );
+
     if ($printCommand) {
         $output = [$backupJob->buildCommand($dryRun)];
     } else {
@@ -120,24 +132,24 @@ $jsonSummaryPath = sprintf(
 
 file_put_contents(
     $jsonSummaryPath,
-    json_encode($arr, JSON_PRETTY_PRINT)."\n",
+    json_encode($arr, JSON_PRETTY_PRINT) . PHP_EOL,
     FILE_APPEND
 );
 
-exit('Finished: '.date('c'));
+exit('Finished: ' . date('c') . PHP_EOL);
 
 function displayHelp() {
-    echo "Usage: php " . basename(__FILE__) . " [OPTIONS]\n";
-    echo "\n";
-    echo "Options:\n";
-    echo "  -h, --help           Display this help message and exit\n";
-    echo "  --force              Force execution and allow overrides\n";
-    echo "  --dryRun             Simulate execution without making changes\n";
-    echo "  --printCommand       Print commands instead of executing them\n";
-    echo "  --jobName=NAME       Specify a single job to execute\n";
-    echo "  --configDir=DIR      Set configuration directory (required)\n";
-    echo "  --logDir=DIR         Set log directory (required)\n";
-    echo "\n";
-    echo "Example:\n";
-    echo "  php " . basename(__FILE__) . " --configDir=/etc/myapp --logDir=/var/log/myapp\n";
+    echo "Usage: php " . basename(__FILE__) . " [OPTIONS]" . PHP_EOL;
+    echo PHP_EOL;
+    echo "Options:" . PHP_EOL;
+    echo "  -h, --help           Display this help message and exit" . PHP_EOL;
+    echo "  --force              Force execution and allow overrides" . PHP_EOL;
+    echo "  --dryRun             Simulate execution without making changes" . PHP_EOL;
+    echo "  --printCommand       Print commands instead of executing them" . PHP_EOL;
+    echo "  --jobName=NAME       Specify a single job to execute" . PHP_EOL;
+    echo "  --configDir=DIR      Set configuration directory (required)" . PHP_EOL;
+    echo "  --logDir=DIR         Set log directory (required)" . PHP_EOL;
+    echo PHP_EOL;
+    echo "Example:" . PHP_EOL;
+    echo "  php " . basename(__FILE__) . " --configDir=/etc/myapp --logDir=/var/log/myapp" . PHP_EOL;
 }
