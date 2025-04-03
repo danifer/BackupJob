@@ -19,14 +19,14 @@ class BackupJob {
         string $source,
         string $destination,
         array $options,
-        int $deleteThreshold = null
+        int $deleteThreshold = 0
     ) {
         $this->jobName = $jobName;
         $this->rsyncBin = $rsyncBin;
         $this->source = $source;
         $this->destination = $destination;
         $this->options = $options;
-        $this->deleteThreshold = $deleteThreshold ?? $this->deleteThreshold;
+        $this->deleteThreshold = $deleteThreshold;
     }
     public function setDeleteThreshold(int $int) : self
     {
@@ -131,7 +131,11 @@ class BackupJob {
 
         $countDeletes = count($deletes);
         try {
-            if ($countDeletes > $this->deleteThreshold && $this->force === false) {
+            if (
+                $this->deleteThreshold !== 0 &&
+                $countDeletes > $this->deleteThreshold &&
+                $this->force === false
+            ) {
                 if ($deleteOption = array_search('--delete', $this->options, true)) {
                     unset($this->options[$deleteOption]);
                 }
