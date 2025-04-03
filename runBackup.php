@@ -1,7 +1,8 @@
 <?php
 require_once('BackupJob.class.php');
 
-$options = getopt('', [
+$options = getopt('h', [
+    'help::',
     'force::',
     'dryRun::',
     'printCommand::',
@@ -17,6 +18,12 @@ $force = isset($options['force']);
 $printCommand = isset($options['printCommand']);
 
 $exitCode = 0;
+
+if (isset($options['h']) || isset($options['help'])) {
+    displayHelp();
+    exit(0);
+}
+
 if (
     empty($configDir) || !is_dir($configDir)
 ) {
@@ -45,6 +52,13 @@ if ($dryRun) {
     echo ("[NOTICE] --dryRun option set [%s]\n");
 }
 
+if (!empty($jobName)) {
+    echo(sprintf(
+        "[NOTICE] Processing jobName [%s]\n",
+        $jobName
+    ));
+}
+
 if ($exitCode) {
     exit($exitCode);
 }
@@ -68,7 +82,6 @@ echo(sprintf(
 ));
 
 $arr = [ ];
-shuffle($backupJobs);
 foreach($backupJobs as $key => $backupJob) {
     $backupJob
         ->setDryRun($dryRun)
@@ -112,3 +125,19 @@ file_put_contents(
 );
 
 exit('Finished: '.date('c'));
+
+function displayHelp() {
+    echo "Usage: php " . basename(__FILE__) . " [OPTIONS]\n";
+    echo "\n";
+    echo "Options:\n";
+    echo "  -h, --help           Display this help message and exit\n";
+    echo "  --force              Force execution and allow overrides\n";
+    echo "  --dryRun             Simulate execution without making changes\n";
+    echo "  --printCommand       Print commands instead of executing them\n";
+    echo "  --jobName=NAME       Specify a single job to execute\n";
+    echo "  --configDir=DIR      Set configuration directory (required)\n";
+    echo "  --logDir=DIR         Set log directory (required)\n";
+    echo "\n";
+    echo "Example:\n";
+    echo "  php " . basename(__FILE__) . " --configDir=/etc/myapp --logDir=/var/log/myapp\n";
+}
