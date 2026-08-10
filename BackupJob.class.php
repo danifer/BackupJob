@@ -9,6 +9,7 @@ class BackupJob {
     private $dryRun = false;
     private $destination;
     private $deleteThreshold = 100;
+    private $freeSpaceFloor = 10737418240;
     private $logDirectory;
     private $rsyncLogFile;
     private $rsyncDryRunLogFile;
@@ -37,6 +38,16 @@ class BackupJob {
     public function getDeleteThreshold() : int
     {
         return $this->deleteThreshold;
+    }
+    public function setFreeSpaceFloor(int $bytes) : self
+    {
+        $this->freeSpaceFloor = $bytes;
+
+        return $this;
+    }
+    public function getFreeSpaceFloor() : int
+    {
+        return $this->freeSpaceFloor;
     }
     public function setDryRun(bool $bool) : self
     {
@@ -108,6 +119,35 @@ class BackupJob {
         $messages =
         $receives =
         $sends = [ ];
+
+        try {
+            $this->assertDestinationReady();
+        } catch (BackupJobException $e) {
+            $errors[] = $e->getMessage();
+            file_put_contents($this->getRsyncLogFile(), $e->getMessage());
+            $endTime = time();
+
+            return [
+                'jobName' => $this->getJobName(),
+                'command' => '',
+                'startDate' => $startDate,
+                'endDate' => date('c'),
+                'startTime' => $startTime,
+                'endTime' => $endTime,
+                'duration' => ($endTime - $startTime),
+                'hasError' => true,
+                'countErrors' => count($errors),
+                'errors' => $errors,
+                'countMessages' => 0,
+                'messages' => [ ],
+                'countSends' => 0,
+                'sends' => [ ],
+                'countDeletes' => 0,
+                'deletes' => [ ],
+                'countReceives' => 0,
+                'receives' => [ ],
+            ];
+        }
 
         //Dry run first
         $resultsArr = $this->executeCommand(
@@ -200,6 +240,49 @@ class BackupJob {
             $this->source,
             $this->destination
         );
+    }
+    private function resolveExistingPath(string $path) : string
+    {
+        $path = rtrim($path, '/');
+        if ($path === '') {
+            $path = '/';
+        }
+        while (!file_exists($path) && dirname($path) !== $path) {
+            $path = dirname($path);
+        }
+
+        return $path;
+    }
+    private function assertDestinationReady() : void
+    {
+        $existing = $this->resolveExistingPath($this->destination);
+        $destStat = @stat($existing);
+        $rootStat = @stat('/');
+        if ($destStat === false || $rootStat === false) {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: could not stat destination path %s.',
+                $this->jobName,
+                $existing
+            ));
+        }
+        if ($destStat['dev'] === $rootStat['dev']) {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: destination %s resolves to %s on the root filesystem. The destination volume is not mounted.',
+                $this->jobName,
+                $this->destination,
+                $existing
+            ));
+        }
+        $free = @disk_free_space($existing);
+        if ($free !== false && $free < $this->freeSpaceFloor) {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: %.0f bytes free at %s is below the %d byte floor.',
+                $this->jobName,
+                $free,
+                $existing,
+                $this->freeSpaceFloor
+            ));
+        }
     }
     private function createLogFiles() : void
     {
