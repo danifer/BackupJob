@@ -121,6 +121,7 @@ class BackupJob {
         $sends = [ ];
 
         try {
+            $this->assertSourceReady();
             $this->assertDestinationReady();
         } catch (BackupJobException $e) {
             $errors[] = $e->getMessage();
@@ -253,26 +254,66 @@ class BackupJob {
 
         return $path;
     }
+    private function isRemotePath(string $path) : bool
+    {
+        // rsync remote specs look like rsync@host:/path. Local paths are
+        // absolute, so anything with a colon before the first slash is remote
+        // and its mount state is the remote host's business, not ours.
+        return (bool) preg_match('#^[^/]+:#', $path);
+    }
+    private function assertVolumeMounted(string $path, string $role) : void
+    {
+        $existing = $this->resolveExistingPath($path);
+
+        // findmnt under `timeout` rather than stat(), because a STALE mount
+        // (device gone, mount entry still present) makes stat() block forever
+        // instead of returning. A hang here would wedge the whole nightly run
+        // silently. Exit 124 is the timeout.
+        $out = [];
+        $rc = 0;
+        @exec(
+            sprintf('timeout 5 findmnt --target %s -no TARGET 2>/dev/null', escapeshellarg($existing)),
+            $out,
+            $rc
+        );
+        if ($rc === 124) {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: checking the %s volume for %s timed out. The mount is hung - stale device.',
+                $this->jobName,
+                $role,
+                $existing
+            ));
+        }
+        $mount = isset($out[0]) ? trim($out[0]) : '';
+        if ($mount === '') {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: could not determine which volume holds the %s path %s.',
+                $this->jobName,
+                $role,
+                $existing
+            ));
+        }
+        if ($mount === '/') {
+            throw new BackupJobException(sprintf(
+                'Refusing job %s: %s %s resolves to %s on the ROOT filesystem. That volume is not mounted.',
+                $this->jobName,
+                $role,
+                $path,
+                $existing
+            ));
+        }
+    }
+    private function assertSourceReady() : void
+    {
+        if ($this->isRemotePath($this->source)) {
+            return;
+        }
+        $this->assertVolumeMounted($this->source, 'source');
+    }
     private function assertDestinationReady() : void
     {
+        $this->assertVolumeMounted($this->destination, 'destination');
         $existing = $this->resolveExistingPath($this->destination);
-        $destStat = @stat($existing);
-        $rootStat = @stat('/');
-        if ($destStat === false || $rootStat === false) {
-            throw new BackupJobException(sprintf(
-                'Refusing job %s: could not stat destination path %s.',
-                $this->jobName,
-                $existing
-            ));
-        }
-        if ($destStat['dev'] === $rootStat['dev']) {
-            throw new BackupJobException(sprintf(
-                'Refusing job %s: destination %s resolves to %s on the root filesystem. The destination volume is not mounted.',
-                $this->jobName,
-                $this->destination,
-                $existing
-            ));
-        }
         $free = @disk_free_space($existing);
         if ($free !== false && $free < $this->freeSpaceFloor) {
             throw new BackupJobException(sprintf(
